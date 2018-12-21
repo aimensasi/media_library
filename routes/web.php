@@ -11,4 +11,4 @@
 |
 */
 
-Route::get('/media', 'MediaController@index')->name('media.index');
+Route::resource('explorers', 'FileExplorersController');

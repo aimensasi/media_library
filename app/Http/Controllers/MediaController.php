@@ -27,4 +27,12 @@ class MediaController extends Controller{
 
 		return view($this->path . 'index');
   }
+
+	/**
+	* Add new Directory to the media library
+	*/
+	public function store(Request $request){
+		return $this->mediaService->store($request);
+	}
+
 }
