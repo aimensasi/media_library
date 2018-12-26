@@ -7,6 +7,7 @@ $factory->define(App\FileElement::class, function (Faker $faker) {
 	$name = $faker->text(rand(5,10));
 
   return [
-    "name" => $name
+    "name" => $name,
+		"parent_id" => null
   ];
 });

@@ -13,7 +13,7 @@ class FileExplorerService extends TransformerService {
 	private const DISK_DRIVER = 'media';
 
 	public function all(){
-		$fileElements = FileElement::all();
+		$fileElements = FileElement::where('parent_id', null)->get();
 
 		return respond($this->transformCollection($fileElements));
 	}
@@ -32,16 +32,19 @@ class FileExplorerService extends TransformerService {
 
 		$request->validate([
 			'name' => 'required|max:40',
+			'current_dir_id' => 'integer|nullable'
 		]);
 
-		dd(FileElement::first());
+
+		if (FileElement::where('name', $request->name)->where('parent_id', $request->current_dir_id)->first() != null) {
+			return validation_error('The name “'. $request->name .'” is already taken. Please choose a different name.');
+		}
 
 		$fileElement = FileElement::create([
 			'name' => $request->name,
 			'parent_id' => $request->current_dir_id,
 			'type' => 'd'
 		]);
-
 
 		Storage::disk(self::DISK_DRIVER)->makeDirectory($this->transformElementPath($fileElement));
 		return respond($this->transform($fileElement));
@@ -50,7 +53,7 @@ class FileExplorerService extends TransformerService {
 
 	/**
 	*
-	* Private Methods
+	* Private Methods | Helpers
 	*
 	*/
 
@@ -67,6 +70,9 @@ class FileExplorerService extends TransformerService {
 			array_push($parentNames, $fileElement->name);
 			$fileElement = $fileElement->parent;
 		}
+
+		array_push($parentNames, $fileElement->name);
+
 
 		while (!empty($parentNames)) {
 			$path .= array_pop($parentNames) . '/';
