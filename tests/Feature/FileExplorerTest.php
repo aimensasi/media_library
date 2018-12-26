@@ -9,14 +9,15 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\FileElement;
 
 
+/**
+* @group file_explorer_feature
+*/
 class FileExplorerTest extends TestCase{
 
 	use RefreshDatabase;
 
 	/**
 	 * @test
-	 *
-	 * @file_explorer_feature
 	 */
 	public function it_should_return_file_explorer_view(){
 		factory(FileElement::class, 4)->create();
@@ -28,8 +29,6 @@ class FileExplorerTest extends TestCase{
 
   /**
 	 * @test
-	 *
-	 * @file_explorer_feature
    */
 	public function it_should_return_media_directoies(){
 		factory(FileElement::class, 4)->create();
@@ -41,8 +40,6 @@ class FileExplorerTest extends TestCase{
 
 	/**
 	* @test
-	*
-	* @file_explorer_feature
 	*/
 	public function it_should_return_selected_folder_and_its_children(){
 		$parent = factory(FileElement::class)->create();

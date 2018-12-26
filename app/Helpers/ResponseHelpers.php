@@ -13,6 +13,13 @@
     }
   }
 
+	if (!function_exists('validation_error')) {
+    function validation_error($message = "", $status_code = 422){
+      return respond(['message' => $message], $status_code);
+    }
+  }
+
+
   if (!function_exists('error')) {
     function error($message = "Internal Server Error", $status_code = 500){
       return respond($message, $status_code);
