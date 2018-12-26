@@ -6,15 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class FileElement extends Model{
 
-	// 
-	// /**
-	//  * The attributes that are mass assignable.
-	//  *
-	//  * @var array
-	//  */
-	// protected $fillable = [
-	//
-	// ];
+
+	/**
+	 * The attributes that are mass assignable.
+	 *
+	 * @var array
+	 */
+	protected $fillable = [
+		"name", "parent_id", "type"
+	];
 
 
 	public function parent(){

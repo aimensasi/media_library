@@ -8,7 +8,9 @@ use Illuminate\Http\Request;
 use Storage;
 
 
-class FileExplorerService extends TransformerService{
+class FileExplorerService extends TransformerService {
+
+	private const DISK_DRIVER = 'media';
 
 	public function all(){
 		$fileElements = FileElement::all();
@@ -26,47 +28,64 @@ class FileExplorerService extends TransformerService{
 		return respond($fileElement);
 	}
 
-	// public function store(Request $request){
-	// 	$validatedData = $request->validate([
-	// 		'name' => 'required|unique:media|max:40',
-	// 		'current_dir' => 'required',
-	// 	]);
-	//
-	// 	$dir_path = $validatedData['current_dir'] . $validatedData['name'];
-	//
-	// 	$media = FileElement::create([
-	// 		'name' => $validatedData['name'],
-	// 		'path' => $dir_path,
-	// 	]);
-	//
-	// 	if ($media) {
-	// 		Storage::makeDirectory($dir_path);
-	//
-	// 		return respond($this->transform($media));
-	// 	}
-	// }
+	public function addDirectory(Request $request){
+
+		$request->validate([
+			'name' => 'required|max:40',
+		]);
+
+		dd(FileElement::first());
+
+		$fileElement = FileElement::create([
+			'name' => $request->name,
+			'parent_id' => $request->current_dir_id,
+			'type' => 'd'
+		]);
+
+
+		Storage::disk(self::DISK_DRIVER)->makeDirectory($this->transformElementPath($fileElement));
+		return respond($this->transform($fileElement));
+	}
+
+
+	/**
+	*
+	* Private Methods
+	*
+	*/
 
 
 	private function transformElementPath($fileElement){
-		if ($fileElement->type == 'd') {
-			return "fa-folder";
-		}
-
-		$parentElement = $fileElement;
 		$parentNames = [];
 		$path = "";
 
-		while ($this->canGoUp($parentElement)) {
-			$parentElement = $parentElement->parent;
-			array_push($parentNames, $parentElement->name);
+		if (!$this->canGoUp($fileElement)) {
+			return $fileElement->name;
+		}
+
+		while ($this->canGoUp($fileElement)) {
+			array_push($parentNames, $fileElement->name);
+			$fileElement = $fileElement->parent;
 		}
 
 		while (!empty($parentNames)) {
 			$path .= array_pop($parentNames) . '/';
 		}
 
-		if (Storage::exists($path . $fileElement->name)) {
-			return Storage::url($path . $fileElement->name);
+		return $path;
+	}
+
+
+	private function transformElementUrl($fileElement){
+		$path = $this->transformElementPath($fileElement);
+
+		if ($fileElement->type == 'd') {
+			return $path;
+		}
+
+
+		if (Storage::exists($path)) {
+			return Storage::disk(self::DISK_DRIVER)->url($path);
 		}
 		return null;
 	}
@@ -76,7 +95,7 @@ class FileExplorerService extends TransformerService{
 	}
 
 	private function canGoUp($fileElement){
-		return $fileElement->parent_id === null ? true : false;
+		return $fileElement->parent_id === null ? false : true;
 	}
 
 	public function transform($fileElement){
@@ -84,8 +103,9 @@ class FileExplorerService extends TransformerService{
 			"id" => $fileElement->id,
 			"name" => $fileElement->name,
 			"parent_id" => $fileElement->parent_id,
+			"type" => $fileElement->type,
 			"canGoUp" => $this->canGoUp($fileElement),
-			"url" => $this->transformElementPath($fileElement),
+			"url" => $this->transformElementUrl($fileElement),
 			"is_dir" => $this->isDirectory($fileElement),
 		];
 	}

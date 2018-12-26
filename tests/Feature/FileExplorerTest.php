@@ -39,7 +39,6 @@ class FileExplorerTest extends TestCase{
 		$response->assertStatus(200)->assertJsonStructure([['id', 'name', 'parent_id', 'canGoUp', 'url', 'is_dir']]);
 	}
 
-
 	/**
 	* @test
 	*
@@ -53,12 +52,6 @@ class FileExplorerTest extends TestCase{
 
 		$response->assertStatus(200)->assertJsonStructure(['id', 'name', 'parent_id', 'canGoUp', 'url', 'is_dir', 'children']);
 	}
-
-
-
-
-
-
 
 
 }

@@ -27,6 +27,17 @@ class FileExplorersController extends Controller{
 		return view($this->path . 'index');
 	}
 
+
+	/**
+	 * Store a newly created resource in storage.
+	 *
+	 * @param  \Illuminate\Http\Request  $request
+	 * @return \Illuminate\Http\Response
+	 */
+	public function store(Request $request){
+		return $this->fileExplorerService->addDirectory($request);
+	}
+
 	/**
 	 * Display the specified resource.
 	 *
