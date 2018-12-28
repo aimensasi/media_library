@@ -18,6 +18,7 @@ class FileExplorerTest extends TestCase{
 
 	/**
 	 * @test
+	 *
 	 */
 	public function it_should_return_file_explorer_view(){
 		factory(FileElement::class, 4)->create();
@@ -29,6 +30,7 @@ class FileExplorerTest extends TestCase{
 
   /**
 	 * @test
+	 *
    */
 	public function it_should_return_media_directoies(){
 		factory(FileElement::class, 4)->create();
@@ -39,8 +41,9 @@ class FileExplorerTest extends TestCase{
 	}
 
 	/**
-	* @test
-	*/
+	 * @test
+	 *
+	 */
 	public function it_should_return_selected_folder_and_its_children(){
 		$parent = factory(FileElement::class)->create();
 		factory(FileElement::class, 10)->create(['parent_id' => $parent->id]);
