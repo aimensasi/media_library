@@ -35,7 +35,7 @@ class FileExplorersController extends Controller{
 	 * @return \Illuminate\Http\Response
 	 */
 	public function store(Request $request){
-		return $this->fileExplorerService->addDirectory($request);
+		return $this->fileExplorerService->create($request);
 	}
 
 	/**

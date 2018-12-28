@@ -40,11 +40,10 @@ class CreatingFoldersFeatureTest extends TestCase{
 			'name' => 'new folder'
 		]);
 
-		$response->assertStatus(200)->assertJsonStructure(['id', 'name', 'parent_id', 'canGoUp', 'url', 'is_dir']);
-
 		$content = json_decode($response->getContent());
 
-		$this->assertTrue(Storage::disk($this->DISK_DRIVER)->exists($content->url), 'Folder does not exists');
+		$response->assertStatus(200)->assertJsonStructure(['id', 'name', 'parent_id', 'canGoUp', 'url', 'is_dir']);
+		Storage::disk($this->DISK_DRIVER)->assertExists($content->url);
   }
 
 
@@ -59,11 +58,10 @@ class CreatingFoldersFeatureTest extends TestCase{
 			'name' => 'new folder'
 		]);
 
-		$response->assertStatus(200)->assertJsonStructure(['id', 'name', 'parent_id', 'canGoUp', 'url', 'is_dir']);
-
 		$content = json_decode($response->getContent());
 
-		$this->assertTrue(Storage::disk($this->DISK_DRIVER)->exists($content->url), 'Folder does not exists');
+		$response->assertStatus(200)->assertJsonStructure(['id', 'name', 'parent_id', 'canGoUp', 'url', 'is_dir']);
+		Storage::disk($this->DISK_DRIVER)->assertExists($content->url);
   }
 
 	/**
@@ -85,11 +83,10 @@ class CreatingFoldersFeatureTest extends TestCase{
 			'name' => 'new folder'
 		]);
 
-		$response->assertStatus(200)->assertJsonStructure(['id', 'name', 'parent_id', 'canGoUp', 'url', 'is_dir']);
-
 		$content = json_decode($response->getContent());
 
-		$this->assertTrue(Storage::disk($this->DISK_DRIVER)->exists($content->url), 'Folder does not exists');
+		$response->assertStatus(200)->assertJsonStructure(['id', 'name', 'parent_id', 'canGoUp', 'url', 'is_dir']);
+		Storage::disk($this->DISK_DRIVER)->assertExists($content->url);
 	}
 
 
@@ -102,11 +99,10 @@ class CreatingFoldersFeatureTest extends TestCase{
 			'name' => 'new folder'
 		]);
 
-		$response->assertStatus(200)->assertJsonStructure(['id', 'name', 'parent_id', 'canGoUp', 'url', 'is_dir']);
-
 		$content = json_decode($response->getContent());
 
-		$this->assertTrue(Storage::disk($this->DISK_DRIVER)->exists($content->url), 'Folder does not exists');
+		$response->assertStatus(200)->assertJsonStructure(['id', 'name', 'parent_id', 'canGoUp', 'url', 'is_dir']);
+		Storage::disk($this->DISK_DRIVER)->assertExists($content->url);
 
 
 		$response = $this->json('POST', '/explorers', [
