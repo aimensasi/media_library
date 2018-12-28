@@ -8,14 +8,27 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 use App\FileElement;
 use Storage;
-
+use Illuminate\Support\Facades\Config;
 /**
-* @group creating_media_test
+* @group creating_folders_test
 */
-class CreatingMediaFeatureTest extends TestCase{
-
+class CreatingFoldersFeatureTest extends TestCase{
 
 	use RefreshDatabase;
+
+	private $DISK_DRIVER;
+
+	/**
+   * @before
+   */
+  public function erase_all_test_folders(){
+		parent::setup();
+
+		$this->DISK_DRIVER = 'media_test';
+
+		Config::set('filesystems.media_library', $this->DISK_DRIVER);
+		Storage::deleteDirectory('tests/media');
+  }
 
 
 	/**
@@ -31,7 +44,7 @@ class CreatingMediaFeatureTest extends TestCase{
 
 		$content = json_decode($response->getContent());
 
-		$this->assertTrue(Storage::disk('media')->exists($content->url), 'Folder does not exists');
+		$this->assertTrue(Storage::disk($this->DISK_DRIVER)->exists($content->url), 'Folder does not exists');
   }
 
 
@@ -50,7 +63,7 @@ class CreatingMediaFeatureTest extends TestCase{
 
 		$content = json_decode($response->getContent());
 
-		$this->assertTrue(Storage::disk('media')->exists($content->url), 'Folder does not exists');
+		$this->assertTrue(Storage::disk($this->DISK_DRIVER)->exists($content->url), 'Folder does not exists');
   }
 
 	/**
@@ -76,7 +89,7 @@ class CreatingMediaFeatureTest extends TestCase{
 
 		$content = json_decode($response->getContent());
 
-		$this->assertTrue(Storage::disk('media')->exists($content->url), 'Folder does not exists');
+		$this->assertTrue(Storage::disk($this->DISK_DRIVER)->exists($content->url), 'Folder does not exists');
 	}
 
 
@@ -93,7 +106,7 @@ class CreatingMediaFeatureTest extends TestCase{
 
 		$content = json_decode($response->getContent());
 
-		$this->assertTrue(Storage::disk('media')->exists($content->url), 'Folder does not exists');
+		$this->assertTrue(Storage::disk($this->DISK_DRIVER)->exists($content->url), 'Folder does not exists');
 
 
 		$response = $this->json('POST', '/explorers', [

@@ -20,6 +20,13 @@
   }
 
 
+	if (!function_exists('no_content')) {
+    function no_content($message = "", $status_code = 204){
+      return respond($message, $status_code);
+    }
+  }
+
+
   if (!function_exists('error')) {
     function error($message = "Internal Server Error", $status_code = 500){
       return respond($message, $status_code);

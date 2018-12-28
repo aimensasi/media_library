@@ -12,3 +12,5 @@
 */
 
 Route::resource('explorers', 'FileExplorersController');
+
+Route::patch('explorers/{explorer}/rename', 'FileExplorersController@rename')->name('explorers.rename');

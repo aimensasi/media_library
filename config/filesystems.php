@@ -28,6 +28,19 @@ return [
 
     'cloud' => env('FILESYSTEM_CLOUD', 's3'),
 
+
+		/*
+    |--------------------------------------------------------------------------
+    | Default Media Library Filesystem Disk
+    |--------------------------------------------------------------------------
+    |
+    | This will be used by the application media library to store uploaded files.
+    |
+    */
+
+    'media_library' => env('MEDIA_LIBRARY_DRIVER', 'media'),
+
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
@@ -58,7 +71,13 @@ return [
             'driver' => 'local',
             'root' => storage_path('app/public/media'),
             'url' => env('APP_URL').'/media',
-            'visibility' => 'public',
+						'visibility' => 'public',
+        ],
+				'media_test' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/tests/media'),
+            'url' => env('APP_URL').'/tests/media',
+						'visibility' => 'public',
         ],
         's3' => [
             'driver' => 's3',
