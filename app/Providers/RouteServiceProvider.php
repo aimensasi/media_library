@@ -4,7 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
-
+use App\FileElement;
 class RouteServiceProvider extends ServiceProvider
 {
     /**
@@ -21,11 +21,12 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
-    {
+    public function boot(){
         //
 
-        parent::boot();
+      parent::boot();
+
+			Route::model('explorer', FileElement::class);
     }
 
     /**

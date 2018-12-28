@@ -44,9 +44,22 @@ class FileExplorersController extends Controller{
 	 * @param  \App\FileElement  $fileElement
 	 * @return \Illuminate\Http\Response
 	 */
-	public function show($id){
-		$fileElement = FileElement::findOrFail($id);
-
+	public function show(FileElement $fileElement){
 		return $this->fileExplorerService->explore($fileElement);
+	}
+
+
+	/**
+	 * Rename the selected Folder/ File
+	 */
+	public function rename(Request $request, FileElement $fileElement){
+		return $this->fileExplorerService->rename($request, $fileElement);
+	}
+
+	/**
+	 * Delete a folder
+	 */
+	public function destroy(FileElement $fileElement){
+		return $this->fileExplorerService->destroy($fileElement);
 	}
 }

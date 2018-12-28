@@ -24,4 +24,18 @@ class FileElement extends Model{
 	public function children(){
 		return $this->hasMany(self::class, 'parent_id');
 	}
+
+
+	public static function boot(){
+		parent::boot();
+
+		// Handling cascading delete of fileElement
+		static::deleting(function($fileElement){
+			if ($fileElement->type === 'd') {
+				$fileElement->children()->get()->each(function($fileElement){
+					$fileElement->delete();
+				});
+			}
+		});
+	}
 }

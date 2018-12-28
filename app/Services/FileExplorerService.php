@@ -10,7 +10,11 @@ use Storage;
 
 class FileExplorerService extends TransformerService {
 
-	private const DISK_DRIVER = 'media';
+	private $DISK_DRIVER;
+
+	public function __construct(){
+		$this->DISK_DRIVER = config('filesystems.media_library');
+	}
 
 	public function all(){
 		$fileElements = FileElement::where('parent_id', null)->get();
@@ -29,11 +33,11 @@ class FileExplorerService extends TransformerService {
 	}
 
 	public function addDirectory(Request $request){
-
 		$request->validate([
 			'name' => 'required|max:40',
 			'current_dir_id' => 'integer|nullable'
 		]);
+
 
 
 		if (FileElement::where('name', $request->name)->where('parent_id', $request->current_dir_id)->first() != null) {
@@ -45,9 +49,50 @@ class FileExplorerService extends TransformerService {
 			'parent_id' => $request->current_dir_id,
 			'type' => 'd'
 		]);
-
-		Storage::disk(self::DISK_DRIVER)->makeDirectory($this->transformElementPath($fileElement));
+		Storage::disk($this->DISK_DRIVER)->makeDirectory($this->transformElementPath($fileElement));
 		return respond($this->transform($fileElement));
+	}
+
+
+	public function rename(Request $request, FileElement $fileElement){
+		$request->validate([
+			'name' => 'required|max:40',
+		]);
+
+		if (FileElement::where('id', '!=', $fileElement->id)->where('name', $request->name)->where('parent_id', $fileElement->parent_id)->first() != null) {
+			return validation_error('The name “'. $request->name .'” is already taken. Please choose a different name.');
+		}
+
+		$current_dir_path = $this->transformElementPath($fileElement);
+
+		if (!Storage::disk($this->DISK_DRIVER)->exists($current_dir_path)) {
+			return validation_error('The folder “'. $request->name .'” does not exists.');
+		}
+
+
+		$fileElement->name = $request->name;
+		$fileElement->save();
+
+		$new_dir_path = $this->transformElementPath($fileElement);
+
+		Storage::disk($this->DISK_DRIVER)->move($current_dir_path, $new_dir_path);
+
+		return no_content();
+	}
+
+
+	public function destroy(FileElement $fileElement){
+		$current_dir_path = $this->transformElementPath($fileElement);
+
+		if (!Storage::disk($this->DISK_DRIVER)->exists($current_dir_path)) {
+			return validation_error('The folder “'. $request->name .'” does not exists.');
+		}
+
+		Storage::disk($this->DISK_DRIVER)->deleteDirectory($current_dir_path);
+
+		$fileElement->delete();
+
+		return no_content();
 	}
 
 
@@ -91,7 +136,7 @@ class FileExplorerService extends TransformerService {
 
 
 		if (Storage::exists($path)) {
-			return Storage::disk(self::DISK_DRIVER)->url($path);
+			return Storage::disk($this->DISK_DRIVER)->url($path);
 		}
 		return null;
 	}
