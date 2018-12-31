@@ -50,14 +50,21 @@ class FileExplorersController extends Controller{
 
 
 	/**
-	 * Rename the selected Folder/ File
+	 * Rename the selected Folder
 	 */
 	public function rename(Request $request, FileElement $fileElement){
 		return $this->fileExplorerService->rename($request, $fileElement);
 	}
 
 	/**
-	 * Delete a folder
+	 * Move the selected  File
+	 */
+	public function move(Request $request, FileElement $fileElement){
+		return $this->fileExplorerService->move($request, $fileElement);
+	}
+
+	/**
+	 * Delete a folder / File
 	 */
 	public function destroy(FileElement $fileElement){
 		return $this->fileExplorerService->destroy($fileElement);
