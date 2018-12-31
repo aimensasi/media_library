@@ -12,53 +12,49 @@ class FileExplorerService extends TransformerService {
 
 	private $DISK_DRIVER;
 
+	// setup the Storage disk driver
 	public function __construct(){
 		$this->DISK_DRIVER = config('filesystems.media_library');
 	}
 
+	// return all root FileElement
 	public function all(){
 		$fileElements = FileElement::where('parent_id', null)->get();
 
 		return respond($this->transformCollection($fileElements));
 	}
 
-
+	// return all FileElement inside the given Directory
 	public function explore(FileElement $fileElement){
-		$children = $this->transformCollection($fileElement->children);
-		$fileElement = $this->transform($fileElement);
+		$result = $this->transform($fileElement);
+		$result['children'] = $this->transformCollection($fileElement->children);
 
-		$fileElement['children'] = $children;
-
-		return respond($fileElement);
+		return respond($result);
 	}
 
-	/**
-	 * Handling the action of creating folders or uploading files
-	 *
-	 */
+	// create a File/Directory in the specified Directory
 	public function create(Request $request){
 		if ($request->has('file')) {
 			return $this->uploadFile($request);
 		}
-
 		return $this->createDirectory($request);
 	}
 
+	// rename the given folder
 	public function rename(Request $request, FileElement $fileElement){
 		$request->validate([
 			'name' => 'required|max:40',
 		]);
 
-		if (FileElement::where('id', '!=', $fileElement->id)->where('name', $request->name)->where('parent_id', $fileElement->parent_id)->first() != null) {
+		if ($this->isNameTaken($request, $fileElement)) {
 			return validation_error('The name “'. $request->name .'” is already taken. Please choose a different name.');
 		}
 
 		$current_dir_path = $this->transformElementPath($fileElement);
 
-		if (!Storage::disk($this->DISK_DRIVER)->exists($current_dir_path)) {
+		if (!$this->fileElementExists($current_dir_path)) {
 			return validation_error('The folder “'. $request->name .'” does not exists.');
 		}
-
 
 		$fileElement->name = $request->name;
 		$fileElement->save();
@@ -70,20 +66,51 @@ class FileExplorerService extends TransformerService {
 		return no_content();
 	}
 
+	// move the File to the specified Directory
+	public function move(Request $request, FileElement $fileElement){
+		$request->validate([
+			'target_dir_id' => 'integer|nullable'
+		]);
 
+		$target_dir = FileElement::find($request->target_dir_id);
+
+		$target_path = '';
+		$current_path = $this->transformElementPath($fileElement);
+
+		if (!$target_dir && $request->target_dir_id !== null) {
+			return validation_error('The selected Directory is invalid or does not exists');
+		}elseif (!$this->fileElementExists($current_path)) {
+			dd($current_path);
+			return validation_error('The folder “'. $fileElement->name .'” does not exists anymore.');
+		}
+
+
+		$fileElement->parent_id = $target_dir->id;
+		$fileElement->save();
+
+		if ($target_dir) {
+			$target_path = $this->transformElementPath($target_dir);
+		}
+
+		Storage::disk($this->DISK_DRIVER)->move($current_path, $target_path . $fileElement->name);
+
+		return no_content();
+	}
+
+	// delete the given File/Directory and its children
 	public function destroy(FileElement $fileElement){
 		$current_dir_path = $this->transformElementPath($fileElement);
 
-		if (!Storage::disk($this->DISK_DRIVER)->exists($current_dir_path)) {
+		if (!$this->fileElementExists($current_dir_path)) {
 			return validation_error('The folder “'. $request->name .'” does not exists.');
 		}
 
 		Storage::disk($this->DISK_DRIVER)->deleteDirectory($current_dir_path);
-
 		$fileElement->delete();
 
 		return no_content();
 	}
+
 
 
 	/**
@@ -92,6 +119,9 @@ class FileExplorerService extends TransformerService {
 	*
 	*/
 
+
+
+	// upload a File to the specified Directory
 	private function uploadFile(Request $request){
 		$request->validate([
 			'current_dir_id' => 'integer|nullable',
@@ -108,13 +138,12 @@ class FileExplorerService extends TransformerService {
 		]);
 
 		$path = $this->transformElementPath($fileElement);
-
 		Storage::disk($this->DISK_DRIVER)->putFileAs($path, $file, $filename);
 
 		return respond($this->transform($fileElement));
 	}
 
-
+	// create a Directory in the specified location
 	private function createDirectory(Request $request){
 		$request->validate([
 			'name' => 'required|max:40',
@@ -122,8 +151,7 @@ class FileExplorerService extends TransformerService {
 		]);
 
 
-
-		if (FileElement::where('name', $request->name)->where('parent_id', $request->current_dir_id)->first() != null) {
+		if ($this->isNameTaken($request)) {
 			return validation_error('The name “'. $request->name .'” is already taken. Please choose a different name.');
 		}
 
@@ -136,39 +164,53 @@ class FileExplorerService extends TransformerService {
 		return respond($this->transform($fileElement));
 	}
 
+	// prepare the Storage path for the given FileElement
 	private function transformElementPath($fileElement){
-		$parentNames = [];
-		$path = "";
-
-		if (!$this->canGoUp($fileElement)) {
+		// if FileElement has no parent then return just the name
+		if ($this->cantGoUp($fileElement)) {
+			if ($this->isDirectory($fileElement)) {
+				return $fileElement->name . '/';
+			}
 			return $fileElement->name;
 		}
 
-		while ($this->canGoUp($fileElement)) {
-			array_push($parentNames, $fileElement->name);
-			$fileElement = $fileElement->parent;
+		$elementStack = [];
+ 		$currentFileElement = $fileElement;
+		$path = "";
+
+
+		// iterate through the FileElement and its parent and push the name to the $elementStack
+		while ($this->canGoUp($currentFileElement)) {
+			array_push($elementStack, $currentFileElement->name);
+			$currentFileElement = $currentFileElement->parent;
 		}
 
-		array_push($parentNames, $fileElement->name);
+		// push the root FileElement to the element stack
+		array_push($elementStack, $currentFileElement->name);
 
 
-		while (!empty($parentNames)) {
-			$path .= array_pop($parentNames) . '/';
+		// iterate through the parents name and create a storage path for that
+		while (!empty($elementStack)) {
+			$element = array_pop($elementStack);
+			if ($fileElement->name === $element && !$this->isDirectory($fileElement)) {
+				$path .= $element;
+			}else{
+				$path .= $element . '/';
+			}
 		}
 
 		return $path;
 	}
 
-
+	// prepare the Storage url for the given FileElement
 	private function transformElementUrl($fileElement){
-
 		$path = $this->transformElementPath($fileElement);
 
 		if ($fileElement->type == 'd') {
 			return $path;
 		}
 
-		if (Storage::disk($this->DISK_DRIVER)->exists($path)) {
+		if ($this->fileElementExists($path)) {
 			return Storage::disk($this->DISK_DRIVER)->url($path);
 		}
 		return null;
@@ -186,14 +228,40 @@ class FileExplorerService extends TransformerService {
     return $file_unique_name;
   }
 
+	// check if FileElement is a Directory
 	private function isDirectory($fileElement){
 		return $fileElement->type == 'd' ? true : false;
 	}
 
+	// check if FileElement has a parent
 	private function canGoUp($fileElement){
 		return $fileElement->parent_id === null ? false : true;
 	}
 
+	// check if FileElement has no parent
+	private function cantGoUp($fileElement){
+		return !$this->canGoUp($fileElement);
+	}
+
+	// check if Directory name is take
+	private function isNameTaken(Request $request, FileElement $fileElement = null){
+		if ($fileElement === null) {
+			return FileElement::where('name', $request->name)
+													->where('parent_id', $request->current_dir_id)
+													->first() != null;
+		}
+		return FileElement::where('id', '!=', $fileElement->id)
+											  ->where('name', $request->name)
+												->where('parent_id', $fileElement->parent_id)
+												->first() != null;
+	}
+
+	// check if FileElement exists
+	private function fileElementExists($path){
+		return Storage::disk($this->DISK_DRIVER)->exists($path);
+	}
+
+	// prepare the FileElement for a the json response
 	public function transform($fileElement){
 		return [
 			"id" => $fileElement->id,

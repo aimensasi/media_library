@@ -48,7 +48,7 @@ class RenameAndRemoveFolderFeatureTest extends TestCase{
 
 		$content = json_decode($response->getContent());
 
-		$this->assertTrue(Storage::disk($this->DISK_DRIVER)->exists($content->url), 'Folder does not exists');
+		Storage::disk($this->DISK_DRIVER)->assertExists($content->path);
 
 		//  Renaming the folder
 
@@ -58,11 +58,13 @@ class RenameAndRemoveFolderFeatureTest extends TestCase{
 			'name' => $newName
 		]);
 
-		echo $response->getContent();
-
 		$response->assertStatus(204);
 
-		$this->assertTrue(Storage::disk($this->DISK_DRIVER)->exists($newName), 'Folder does not exists');
+
+		$response = $this->json('GET', "/explorers/{$content->id}");
+		$content = json_decode($response->getContent());
+
+		Storage::disk($this->DISK_DRIVER)->assertExists($content->path);
 	}
 
 	/**
@@ -88,7 +90,7 @@ class RenameAndRemoveFolderFeatureTest extends TestCase{
 
 		$content = json_decode($response->getContent());
 
-		$this->assertTrue(Storage::disk($this->DISK_DRIVER)->exists($content->url), 'Folder does not exists');
+		Storage::disk($this->DISK_DRIVER)->assertExists($content->path);
 
 		//  Renaming the folder
 
@@ -104,7 +106,7 @@ class RenameAndRemoveFolderFeatureTest extends TestCase{
 
 		$content = json_decode($response->getContent());
 
-		$this->assertTrue(Storage::disk($this->DISK_DRIVER)->exists($content->url), 'Folder does not exists');
+		Storage::disk($this->DISK_DRIVER)->assertExists($content->path);
 	}
 
 
@@ -122,7 +124,7 @@ class RenameAndRemoveFolderFeatureTest extends TestCase{
 
 		$content = json_decode($response->getContent());
 
-		$this->assertTrue(Storage::disk($this->DISK_DRIVER)->exists($content->url), 'Folder does not exists');
+		Storage::disk($this->DISK_DRIVER)->assertExists($content->path);
 
 		//  Deleting the folder
 
@@ -130,7 +132,7 @@ class RenameAndRemoveFolderFeatureTest extends TestCase{
 
 		$response->assertStatus(204);
 
-		$this->assertFalse(Storage::disk($this->DISK_DRIVER)->exists($content->url), 'Folder still there');
+		Storage::disk($this->DISK_DRIVER)->assertMissing($content->path);
 	}
 
 
@@ -149,7 +151,7 @@ class RenameAndRemoveFolderFeatureTest extends TestCase{
 
 		$first_dir = json_decode($response->getContent());
 
-		$this->assertTrue(Storage::disk($this->DISK_DRIVER)->exists($first_dir->url), 'Folder does not exists');
+		Storage::disk($this->DISK_DRIVER)->assertExists($first_dir->path);
 		$this->assertTrue(FileElement::find($first_dir->id) != null);
 
 		$second_dir = factory(FileElement::class)->create([
@@ -167,7 +169,7 @@ class RenameAndRemoveFolderFeatureTest extends TestCase{
 		$response->assertStatus(204);
 
 
-		$this->assertFalse(Storage::disk($this->DISK_DRIVER)->exists($first_dir->url), 'Folder still there');
+		Storage::disk($this->DISK_DRIVER)->assertMissing($first_dir->path);
 		$this->assertTrue(FileElement::find($first_dir->id) === null);
 	}
 

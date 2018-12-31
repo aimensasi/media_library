@@ -33,6 +33,12 @@
     }
   }
 
+	if (!function_exists('not_found')) {
+    function not_found($message = "Not Found", $status_code = 404){
+      return respond($message, $status_code);
+    }
+  }
+
   if (!function_exists('form_error')) {
     function form_error_respond($messages, $status_code = 422){
       $messagesList = [];
