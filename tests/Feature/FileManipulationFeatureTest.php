@@ -40,21 +40,14 @@ class FileManipulationFeatureTest extends TestCase{
 	 *
 	 */
 	public function it_should_delete_file(){
-		$response = $this->json('POST', '/explorers', [
-			'current_dir_id' => null,
-			'file' => UploadedFile::fake()->image('faker.jpg')
-		]);
+		$fileElement = $this->createFileElement();
 
-		$response->assertStatus(200)->assertJsonStructure(['id', 'name', 'parent_id', 'canGoUp', 'url', 'is_dir', 'path']);
-		$content = json_decode($response->getContent());
+		$response = $this->json('DELETE', "/explorers/{$fileElement->id}");
 
-		Storage::disk($this->DISK_DRIVER)->assertExists($content->path);
 
-		$response = $this->json('DELETE', "/explorers/{$content->id}");
-
+		// Assertation
 		$response->assertStatus(204);
-
-		Storage::disk($this->DISK_DRIVER)->assertMissing($content->path);
+		Storage::disk($this->DISK_DRIVER)->assertMissing($fileElement->path);
 	}
 
 	/**
@@ -64,34 +57,50 @@ class FileManipulationFeatureTest extends TestCase{
 	 */
 	public function it_should_move_file_to_specified_directory(){
 		$directory = factory(FileElement::Class)->create();
-
-		// Upload the File
-		$response = $this->json('POST', '/explorers', [
-			'current_dir_id' => null,
-			'file' => UploadedFile::fake()->image('faker.jpg')
-		]);
-
-
-		$response->assertStatus(200);
-		$fileElement = json_decode($response->getContent());
-		Storage::disk($this->DISK_DRIVER)->assertExists($fileElement->path);
+		$fileElement = $this->createFileElement();
 
 		// Move The file
 		$response = $this->json('PATCH', "/explorers/{$fileElement->id}/move", [
 			'target_dir_id' => $directory->id
 		]);
 
-
 		// Assert that the file has been moved
 		$response->assertStatus(204);
 		Storage::disk($this->DISK_DRIVER)->assertMissing($fileElement->path);
 
-		// Get the file again and assert that it exists in its new location
-		$response = $this->json('GET', "/explorers/{$fileElement->id}");
-		$fileElement = json_decode($response->getContent());
+		$fileElement = $this->getFileElement($fileElement->id);
 
 		$this->assertTrue($fileElement->parent_id === $directory->id);
 		Storage::disk($this->DISK_DRIVER)->assertExists($fileElement->path);
+	}
+
+
+
+	/**
+	 *
+	 * Private Helper Methods
+	 *
+	 */
+
+
+	// send a post request to create a file
+	private function createFileElement($parent_id = null){
+		$response = $this->json('POST', '/explorers', [
+			'current_dir_id' => $parent_id,
+			'file' => UploadedFile::fake()->image('faker.jpg')
+		]);
+
+		$fileElement = json_decode($response->getContent());
+
+		return $fileElement;
+	}
+
+	// Get FileElement with path & url
+	public function getFileElement($id){
+		$response = $this->json('GET', "/explorers/{$id}");
+		$fileElement = json_decode($response->getContent());
+
+		return $fileElement;
 	}
 
 }
